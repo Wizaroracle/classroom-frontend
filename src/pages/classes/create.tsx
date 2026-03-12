@@ -3,7 +3,7 @@ import { CreateView } from "@/components/refine-ui/views/create-view";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useBack } from "@refinedev/core";
+import { useBack, useList } from "@refinedev/core";
 import z from "zod";
 import { useForm } from "@refinedev/react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,25 +28,10 @@ import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import UploadWidget from "@/components/upload-widget";
+import { Subject, User } from "@/types";
 
 const ClassesCreate = () => {
   const back = useBack();
-
-  const teachers = [
-    { id: "1", name: "John Doe" },
-    { id: "2", name: "Jane Smith" },
-    { id: "3", name: "Bob Johnson" },
-  ];
-
-  const subjects = [
-    { id: 1, name: "Mathematics", code: "MATH" },
-    { id: 2, name: "English Literature", code: "ENGL" },
-    { id: 3, name: "Physics", code: "PHYS" },
-    { id: 4, name: "Chemistry", code: "CHEM" },
-  ];
-
-  const subjectsLoading = false;
-  const teachersLoading = false;
 
   const form = useForm({
     resolver: zodResolver(classSchema),
@@ -65,6 +50,35 @@ const ClassesCreate = () => {
     formState: { isSubmitting, errors },
     control,
   } = form;
+
+  // Fetch subjects list
+  const { query: subjectsQuery } = useList<Subject>({
+    resource: "subjects",
+    pagination: {
+      pageSize: 100,
+    },
+  });
+
+  // Fetch teachers list
+  const { query: teachersQuery } = useList<User>({
+    resource: "users",
+    filters: [
+      {
+        field: "role",
+        operator: "eq",
+        value: "teacher",
+      },
+    ],
+    pagination: {
+      pageSize: 100,
+    },
+  });
+
+  const teachers = teachersQuery.data?.data || [];
+  const teachersLoading = teachersQuery.isLoading;
+
+  const subjects = subjectsQuery.data?.data || [];
+  const subjectsLoading = subjectsQuery.isLoading;
 
   const bannerPublicId = form.watch("bannerCldPubId");
 
